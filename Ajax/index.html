@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도서 목록 관리</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f5f5f5;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    input, select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    button {
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+    }
+
+    button:hover {
+        background: #0056b3;
+    }
+
+    .book-item {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 4px;
+    }
+
+    .book-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .book-actions {
+        margin-top: 10px;
+    }
+
+    .edit-btn {
+        background: #ffc107;
+        color: black;
+    }
+
+    .delete-btn {
+        background: #dc3545;
+    }
+</style>
+
+<script>
+    let books = [];
+    let editingBookId = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setupEventListeners();
+        loadBooks();
+    });
+
+    function setupEventListeners() {
+        document.getElementById('bookForm').addEventListener('submit', handleFormSubmit);
+        document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
+        
+        // 이벤트 위임을 사용하여 동적 버튼들 처리
+        document.addEventListener('click', function(event) {
+            console.log('클릭 이벤트 발생:', event.target.className, event.target.id);
+            
+            if (event.target.classList.contains('delete-btn')) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                const buttonId = event.target.id;
+                console.log('삭제 버튼 ID:', buttonId);
+                
+                if (buttonId && buttonId.startsWith('delete-')) {
+                    const bookId = parseInt(buttonId.replace('delete-', ''));
+                    console.log('추출된 도서 ID:', bookId);
+                    
+                    if (!isNaN(bookId)) {
+                        deleteBook(bookId);
+                    } else {
+                        console.error('유효하지 않은 도서 ID:', buttonId);
+                    }
+                }
+            }
+            
+            if (event.target.classList.contains('edit-btn')) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                const buttonId = event.target.id;
+                if (buttonId && buttonId.startsWith('edit-')) {
+                    const bookId = parseInt(buttonId.replace('edit-', ''));
+                    console.log('수정 버튼 클릭됨, ID:', bookId);
+                    
+                    if (!isNaN(bookId)) {
+                        editBook(bookId);
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadBooks() {
+        const response = await fetch('my_data.json');
+        books = await response.json();
+        displayBooks(books);
+    }
+
+    function displayBooks(booksToShow) {
+        const container = document.getElementById('booksContainer');
+        container.innerHTML = booksToShow.map(book => createBookHTML(book)).join('');
+        console.log('도서 목록이 업데이트되었습니다:', booksToShow.length, '권');
+    }
+
+    function createBookHTML(book) {
+        return `
+            <div class="book-item">
+                <div class="book-title">${book.title}</div>
+                <div>저자: ${book.author}</div>
+                <div>출판년도: ${book.year}</div>
+                <div>장르: ${book.genre}</div>
+                <div class="book-actions">
+                    <button class="edit-btn" id="edit-${book.id}">수정</button>
+                    <button class="delete-btn" id="delete-${book.id}">삭제</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const bookData = {
+            title: formData.get('title'),
+            author: formData.get('author'),
+            year: parseInt(formData.get('year')),
+            genre: formData.get('genre')
+        };
+
+        if (editingBookId) {
+            updateBook(editingBookId, bookData);
+        } else {
+            addBook(bookData);
+        }
+    }
+
+    function addBook(bookData) {
+        const newBook = {
+            id: getNextId(),
+            ...bookData
+        };
+        books.push(newBook);
+        displayBooks(books);
+        resetForm();
+    }
+
+    function updateBook(id, bookData) {
+        const bookIndex = books.findIndex(book => book.id === id);
+        books[bookIndex] = { id, ...bookData };
+        displayBooks(books);
+        resetForm();
+    }
+
+    function editBook(id) {
+        const book = books.find(book => book.id === id);
+        document.getElementById('title').value = book.title;
+        document.getElementById('author').value = book.author;
+        document.getElementById('year').value = book.year;
+        document.getElementById('genre').value = book.genre;
+        
+        editingBookId = id;
+        document.getElementById('submitBtn').textContent = '수정';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+    }
+
+    function cancelEdit() {
+        resetForm();
+    }
+
+    function deleteBook(id) {
+        console.log('삭제 버튼 클릭됨, ID:', id);
+        const book = books.find(book => book.id === id);
+        if (book) {
+            console.log('삭제할 도서:', book.title);
+            books = books.filter(book => book.id !== id);
+            displayBooks(books);
+            console.log('도서가 삭제되었습니다:', book.title);
+        } else {
+            console.log('도서를 찾을 수 없습니다. ID:', id);
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('bookForm').reset();
+        editingBookId = null;
+        document.getElementById('submitBtn').textContent = '추가';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    function getNextId() {
+        return books.length > 0 ? Math.max(...books.map(book => book.id)) + 1 : 1;
+    }
+
+</script>
+
+<body>
+    <div class="container">
+        <h1>도서 목록 관리</h1>
+
+        <form id="bookForm">
+            <div class="form-group">
+                <label for="title">제목:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="author">저자:</label>
+                <input type="text" id="author" name="author" required>
+            </div>
+            <div class="form-group">
+                <label for="year">출판년도:</label>
+                <input type="number" id="year" name="year" required>
+            </div>
+            <div class="form-group">
+                <label for="genre">장르:</label>
+                <select id="genre" name="genre" required>
+                    <option value="">선택하세요</option>
+                    <option value="소설">소설</option>
+                    <option value="과학">과학</option>
+                    <option value="역사">역사</option>
+                    <option value="프로그래밍">프로그래밍</option>
+                    <option value="판타지">판타지</option>
+                    <option value="로맨스">로맨스</option>
+                    <option value="미스터리">미스터리</option>
+                    <option value="디스토피아">디스토피아</option>
+                    <option value="자기계발">자기계발</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" id="submitBtn">추가</button>
+                <button type="button" id="cancelBtn" style="display: none;">취소</button>
+            </div>
+        </form>
+
+        <div id="booksContainer"></div>
+    </div>
+</body>
+
+</html>
