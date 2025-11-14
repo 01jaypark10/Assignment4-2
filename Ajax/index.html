@@ -1,292 +1,533 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>도서 목록 관리</title>
+    <title>도서 목록 관리 시스템</title>
+    <style>
+        /* 전체 앱 스타일 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        .app {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 헤더 스타일 */
+        .header {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            margin: 0 0 20px 0;
+            font-size: 16px;
+        }
+
+        .add-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .add-button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 도서 목록 스타일 */
+        .book-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* 도서 카드 스타일 */
+        .book-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .book-card:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .book-title {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .book-body {
+            padding: 20px;
+        }
+
+        .book-body p {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .genre-badge {
+            background-color: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .book-actions {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-button {
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .edit-button:hover {
+            background-color: #e0a800;
+        }
+
+        .delete-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+
+        /* 빈 메시지 스타일 */
+        .empty-message {
+            text-align: center;
+            padding: 50px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-message h3 {
+            color: #666;
+            margin: 0 0 10px 0;
+        }
+
+        .empty-message p {
+            color: #999;
+            margin: 0;
+        }
+
+        /* 모델 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .cancel-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cancel-button:hover {
+            background-color: #5a6268;
+        }
+
+        .submit-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
-<style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        background: #f5f5f5;
-    }
-
-    .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-    }
-
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #333;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-    }
-
-    input, select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
-
-    button {
-        padding: 10px 20px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-right: 10px;
-    }
-
-    button:hover {
-        background: #0056b3;
-    }
-
-    .book-item {
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 4px;
-    }
-
-    .book-title {
-        font-size: 1.2em;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-
-    .book-actions {
-        margin-top: 10px;
-    }
-
-    .edit-btn {
-        background: #ffc107;
-        color: black;
-    }
-
-    .delete-btn {
-        background: #dc3545;
-    }
-</style>
-
-<script>
-    let books = [];
-    let editingBookId = null;
-
-    document.addEventListener('DOMContentLoaded', function () {
-        setupEventListeners();
-        loadBooks();
-    });
-
-    function setupEventListeners() {
-        document.getElementById('bookForm').addEventListener('submit', handleFormSubmit);
-        document.getElementById('cancelBtn').addEventListener('click', cancelEdit);
-        
-        // 이벤트 위임을 사용하여 동적 버튼들 처리
-        document.addEventListener('click', function(event) {
-            console.log('클릭 이벤트 발생:', event.target.className, event.target.id);
-            
-            if (event.target.classList.contains('delete-btn')) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                const buttonId = event.target.id;
-                console.log('삭제 버튼 ID:', buttonId);
-                
-                if (buttonId && buttonId.startsWith('delete-')) {
-                    const bookId = parseInt(buttonId.replace('delete-', ''));
-                    console.log('추출된 도서 ID:', bookId);
-                    
-                    if (!isNaN(bookId)) {
-                        deleteBook(bookId);
-                    } else {
-                        console.error('유효하지 않은 도서 ID:', buttonId);
-                    }
-                }
-            }
-            
-            if (event.target.classList.contains('edit-btn')) {
-                event.preventDefault();
-                event.stopPropagation();
-                
-                const buttonId = event.target.id;
-                if (buttonId && buttonId.startsWith('edit-')) {
-                    const bookId = parseInt(buttonId.replace('edit-', ''));
-                    console.log('수정 버튼 클릭됨, ID:', bookId);
-                    
-                    if (!isNaN(bookId)) {
-                        editBook(bookId);
-                    }
-                }
-            }
-        });
-    }
-
-    async function loadBooks() {
-        const response = await fetch('my_data.json');
-        books = await response.json();
-        displayBooks(books);
-    }
-
-    function displayBooks(booksToShow) {
-        const container = document.getElementById('booksContainer');
-        container.innerHTML = booksToShow.map(book => createBookHTML(book)).join('');
-        console.log('도서 목록이 업데이트되었습니다:', booksToShow.length, '권');
-    }
-
-    function createBookHTML(book) {
-        return `
-            <div class="book-item">
-                <div class="book-title">${book.title}</div>
-                <div>저자: ${book.author}</div>
-                <div>출판년도: ${book.year}</div>
-                <div>장르: ${book.genre}</div>
-                <div class="book-actions">
-                    <button class="edit-btn" id="edit-${book.id}">수정</button>
-                    <button class="delete-btn" id="delete-${book.id}">삭제</button>
-                </div>
-            </div>
-        `;
-    }
-
-    function handleFormSubmit(event) {
-        event.preventDefault();
-        
-        const formData = new FormData(event.target);
-        const bookData = {
-            title: formData.get('title'),
-            author: formData.get('author'),
-            year: parseInt(formData.get('year')),
-            genre: formData.get('genre')
-        };
-
-        if (editingBookId) {
-            updateBook(editingBookId, bookData);
-        } else {
-            addBook(bookData);
-        }
-    }
-
-    function addBook(bookData) {
-        const newBook = {
-            id: getNextId(),
-            ...bookData
-        };
-        books.push(newBook);
-        displayBooks(books);
-        resetForm();
-    }
-
-    function updateBook(id, bookData) {
-        const bookIndex = books.findIndex(book => book.id === id);
-        books[bookIndex] = { id, ...bookData };
-        displayBooks(books);
-        resetForm();
-    }
-
-    function editBook(id) {
-        const book = books.find(book => book.id === id);
-        document.getElementById('title').value = book.title;
-        document.getElementById('author').value = book.author;
-        document.getElementById('year').value = book.year;
-        document.getElementById('genre').value = book.genre;
-        
-        editingBookId = id;
-        document.getElementById('submitBtn').textContent = '수정';
-        document.getElementById('cancelBtn').style.display = 'inline-block';
-    }
-
-    function cancelEdit() {
-        resetForm();
-    }
-
-    function deleteBook(id) {
-        console.log('삭제 버튼 클릭됨, ID:', id);
-        const book = books.find(book => book.id === id);
-        if (book) {
-            console.log('삭제할 도서:', book.title);
-            books = books.filter(book => book.id !== id);
-            displayBooks(books);
-            console.log('도서가 삭제되었습니다:', book.title);
-        } else {
-            console.log('도서를 찾을 수 없습니다. ID:', id);
-        }
-    }
-
-    function resetForm() {
-        document.getElementById('bookForm').reset();
-        editingBookId = null;
-        document.getElementById('submitBtn').textContent = '추가';
-        document.getElementById('cancelBtn').style.display = 'none';
-    }
-
-    function getNextId() {
-        return books.length > 0 ? Math.max(...books.map(book => book.id)) + 1 : 1;
-    }
-
-</script>
 
 <body>
-    <div class="container">
-        <h1>도서 목록 관리</h1>
+    <div class="app">
+        <div class="header">
+            <h1>도서 목록 관리 시스템</h1>
+            <p>총 <span id="bookCount">0</span>권의 도서가 등록되어 있습니다</p>
+            <button class="add-button" onclick="openModal()">새 도서 추가</button>
+        </div>
 
-        <form id="bookForm">
-            <div class="form-group">
-                <label for="title">제목:</label>
-                <input type="text" id="title" name="title" required>
-            </div>
-            <div class="form-group">
-                <label for="author">저자:</label>
-                <input type="text" id="author" name="author" required>
-            </div>
-            <div class="form-group">
-                <label for="year">출판년도:</label>
-                <input type="number" id="year" name="year" required>
-            </div>
-            <div class="form-group">
-                <label for="genre">장르:</label>
-                <select id="genre" name="genre" required>
-                    <option value="">선택하세요</option>
-                    <option value="소설">소설</option>
-                    <option value="과학">과학</option>
-                    <option value="역사">역사</option>
-                    <option value="프로그래밍">프로그래밍</option>
-                    <option value="판타지">판타지</option>
-                    <option value="로맨스">로맨스</option>
-                    <option value="미스터리">미스터리</option>
-                    <option value="디스토피아">디스토피아</option>
-                    <option value="자기계발">자기계발</option>
-                </select>
-            </div>
-            <div>
-                <button type="submit" id="submitBtn">추가</button>
-                <button type="button" id="cancelBtn" style="display: none;">취소</button>
-            </div>
-        </form>
-
-        <div id="booksContainer"></div>
+        <div id="bookList" class="book-list">
+        </div>
+        <div id="emptyMessage" class="empty-message" style="display: none;">
+            <h3>등록된 도서가 없습니다</h3>
+            <p>새 도서를 추가해보세요!</p>
+        </div>
     </div>
+
+    <!-- 모델 -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 도서 추가</h2>
+                <button class="close-button" onclick="closeModal()">&times;</button>
+            </div>
+
+            <form id="bookForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>제목</label>
+                        <input type="text" id="title" placeholder="도서 제목" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>저자</label>
+                        <input type="text" id="author" placeholder="저자명" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>출판년도</label>
+                        <input type="number" id="year" placeholder="출판년도" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>장르</label>
+                        <select id="genre" required>
+                            <option value="">장르 선택</option>
+                            <option value="소설">소설</option>
+                            <option value="과학">과학</option>
+                            <option value="역사">역사</option>
+                            <option value="프로그래밍">프로그래밍</option>
+                            <option value="판타지">판타지</option>
+                            <option value="로맨스">로맨스</option>
+                            <option value="미스터리">미스터리</option>
+                            <option value="디스토피아">디스토피아</option>
+                            <option value="자기계발">자기계발</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="cancel-button" onclick="closeModal()">취소</button>
+                    <button type="submit" class="submit-button" id="submitButton">추가</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let books = [];
+        let editingBookId = null;
+
+        // 페이지 로드시 초기화
+        document.addEventListener('DOMContentLoaded', function () {
+            loadBooks();
+        });
+
+        // Ajax로 도서 데이터 로드
+        function loadBooks() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', 'my_data.json', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    books = JSON.parse(xhr.responseText);
+                    displayBooks();
+                    updateBookCount();
+                }
+            };
+            xhr.send();
+        }
+
+        // 도서 목록 표시
+        function displayBooks() {
+            const bookList = document.getElementById('bookList');
+            const emptyMessage = document.getElementById('emptyMessage');
+
+            if (books.length === 0) {
+                bookList.style.display = 'none';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+
+            bookList.style.display = 'grid';
+            emptyMessage.style.display = 'none';
+
+            let html = '';
+            for (let i = 0; i < books.length; i++) {
+                const book = books[i];
+                html += `
+                    <div class="book-card">
+                        <div class="book-header">
+                            <h3 class="book-title">${book.title}</h3>
+                        </div>
+                        <div class="book-body">
+                            <p><strong>저자:</strong> ${book.author}</p>
+                            <p><strong>출판년도:</strong> ${book.year}년</p>
+                            <p>
+                                <strong>장르:</strong>
+                                <span class="genre-badge">${book.genre}</span>
+                            </p>
+                        </div>
+                        <div class="book-actions">
+                            <button class="edit-button" onclick="editBook(${book.id})">수정</button>
+                            <button class="delete-button" onclick="deleteBook(${book.id})">삭제</button>
+                        </div>
+                    </div>
+                `;
+            }
+            bookList.innerHTML = html;
+        }
+
+        // 도서 수 업데이트
+        function updateBookCount() {
+            document.getElementById('bookCount').textContent = books.length;
+        }
+
+        // 모델 열기
+        function openModal() {
+            editingBookId = null;
+            document.getElementById('modalTitle').textContent = '새 도서 추가';
+            document.getElementById('submitButton').textContent = '추가';
+            clearForm();
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        // 모델 닫기
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+            editingBookId = null;
+            clearForm();
+        }
+
+        // 폼 초기화
+        function clearForm() {
+            document.getElementById('title').value = '';
+            document.getElementById('author').value = '';
+            document.getElementById('year').value = '';
+            document.getElementById('genre').value = '';
+        }
+
+        // 도서 수정
+        function editBook(id) {
+            const book = books.find(b => b.id === id);
+            if (book) {
+                editingBookId = id;
+                document.getElementById('modalTitle').textContent = '도서 정보 수정';
+                document.getElementById('submitButton').textContent = '수정';
+
+                document.getElementById('title').value = book.title;
+                document.getElementById('author').value = book.author;
+                document.getElementById('year').value = book.year;
+                document.getElementById('genre').value = book.genre;
+
+                document.getElementById('modalOverlay').classList.add('show');
+            }
+        }
+
+        // 도서 삭제
+        function deleteBook(id) {
+            if (confirm('정말로 이 도서를 삭제하시겠습니까?')) {
+                books = books.filter(book => book.id !== id);
+                displayBooks();
+                updateBookCount();
+            }
+        }
+
+        // 폼 제출 처리
+        document.getElementById('bookForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value.trim();
+            const author = document.getElementById('author').value.trim();
+            const year = parseInt(document.getElementById('year').value);
+            const genre = document.getElementById('genre').value;
+
+            if (!title || !author || !year || !genre) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            if (editingBookId) {
+                // 수정
+                const bookIndex = books.findIndex(book => book.id === editingBookId);
+                if (bookIndex !== -1) {
+                    books[bookIndex] = {
+                        id: editingBookId,
+                        title: title,
+                        author: author,
+                        year: year,
+                        genre: genre
+                    };
+                }
+            } else {
+                // 추가
+                const newId = books.length > 0 ? Math.max(...books.map(book => book.id)) + 1 : 1;
+                const newBook = {
+                    id: newId,
+                    title: title,
+                    author: author,
+                    year: year,
+                    genre: genre
+                };
+                books.push(newBook);
+            }
+
+            displayBooks();
+            updateBookCount();
+            closeModal();
+        });
+
+        // 모델 외부 클릭시 닫기
+        document.getElementById('modalOverlay').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 
 </html>
